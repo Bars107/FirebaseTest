@@ -37,6 +37,34 @@ public class ChatActivity extends AppCompatActivity {
 
     private SanitiseManager sanitiseManager = new SanitiseManager();
 
+    //listener for message data update
+    private ValueEventListener messageDataUpdatedListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            analyzeMessagesData(dataSnapshot);
+            showData();
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+            showErrorMessage();
+        }
+    };
+
+    //listener for words data update
+    private ValueEventListener wordsDataUpdateListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            analyzeWordsData(dataSnapshot);
+            showData();
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+            showErrorMessage();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,20 +88,12 @@ public class ChatActivity extends AppCompatActivity {
         getReplaceWords();
     }
 
-    //Use it to get all messages from server once
+    //Use it to get all messages from server
     private void getMessages() {
         storage.child(MESSAGES_REF).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                ArrayList<DatabaseValue> messages = new ArrayList<>();
-                messagesToShow.clear();
-                for (DataSnapshot data : dataSnapshot.getChildren()) {
-                    DatabaseValue message = new DatabaseValue(data.getKey(), data.getValue().toString());
-                    messages.add(message);
-                    Log.d("CHAT_ACTIVITY", "New message received " + message.getId() + " " + message.getMessage());
-                    messagesToShow.add(message.getMessage());
-                }
-                messagesToShow = sanitiseManager.replaceWords(messagesToShow);
+                analyzeMessagesData(dataSnapshot);
                 setupListeners();
                 showData();
             }
@@ -85,8 +105,25 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private void setupListeners() {
+    //Use it to get all replacement words from server
+    private void getReplaceWords() {
+        storage.child(WORDS_REF).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                analyzeWordsData(dataSnapshot);
+                getMessages();
+            }
 
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                showErrorMessage();
+            }
+        });
+    }
+
+    private void setupListeners() {
+        storage.child(MESSAGES_REF).addValueEventListener(messageDataUpdatedListener);
+        storage.child(WORDS_REF).addValueEventListener(wordsDataUpdateListener);
     }
 
     private void removeListeners() {
@@ -99,26 +136,24 @@ public class ChatActivity extends AppCompatActivity {
         removeListeners();
     }
 
-    //Use it to get all replacement words from server once
-    private void getReplaceWords() {
-        storage.child(WORDS_REF).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                ArrayList<DatabaseValue> wordsToFilter = new ArrayList<>();
-                for (DataSnapshot data : dataSnapshot.getChildren()) {
-                    DatabaseValue word = new DatabaseValue(data.getKey(), data.getValue().toString());
-                    wordsToFilter.add(word);
-                    Log.d("CHAT_ACTIVITY", "New word received " + word.getMessage());
-                }
-                sanitiseManager.createSenitiseList(wordsToFilter);
-                getMessages();
-            }
+    private void analyzeWordsData(DataSnapshot dataSnapshot) {
+        ArrayList<DatabaseValue> wordsToFilter = new ArrayList<>();
+        for (DataSnapshot data : dataSnapshot.getChildren()) {
+            DatabaseValue word = new DatabaseValue(data.getKey(), data.getValue().toString());
+            wordsToFilter.add(word);
+            Log.d("CHAT_ACTIVITY", "New word received " + word.getMessage());
+        }
+        sanitiseManager.createSenitiseList(wordsToFilter);
+    }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                showErrorMessage();
-            }
-        });
+    private void analyzeMessagesData(DataSnapshot dataSnapshot) {
+        messagesToShow.clear();
+        for (DataSnapshot data : dataSnapshot.getChildren()) {
+            DatabaseValue message = new DatabaseValue(data.getKey(), data.getValue().toString());
+            Log.d("CHAT_ACTIVITY", "New message received " + message.getId() + " " + message.getMessage());
+            messagesToShow.add(message.getMessage());
+        }
+        messagesToShow = sanitiseManager.replaceWords(messagesToShow);
     }
 
     private void showData() {
