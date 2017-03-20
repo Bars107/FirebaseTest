@@ -1,4 +1,4 @@
-package innovecs.tes.android;
+package innovecs.tes.android.DataStructures;
 
 /**
  * Created by barsi on 3/20/2017.

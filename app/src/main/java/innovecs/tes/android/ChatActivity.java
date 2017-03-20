@@ -19,12 +19,16 @@ import net.bohush.geometricprogressview.GeometricProgressView;
 
 import java.util.ArrayList;
 
+import innovecs.tes.android.DataStructures.DatabaseValue;
+
 public class ChatActivity extends AppCompatActivity {
     private static final String MESSAGES_REF = "messages";
     private static final String WORDS_REF = "words";
 
     private GeometricProgressView progressView;
+    //list of messages
     private ListView messagesList;
+    //will be shown if something goes wrong
     private TextView errorMessage;
 
     private DatabaseReference storage;
@@ -38,6 +42,7 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        //this button allows to refresh all data
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,6 +74,7 @@ public class ChatActivity extends AppCompatActivity {
                     messagesToShow.add(message.getMessage());
                 }
                 messagesToShow = sanitiseManager.replaceWords(messagesToShow);
+                setupListeners();
                 showData();
             }
 
@@ -77,6 +83,20 @@ public class ChatActivity extends AppCompatActivity {
                 showErrorMessage();
             }
         });
+    }
+
+    private void setupListeners() {
+
+    }
+
+    private void removeListeners() {
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        removeListeners();
     }
 
     //Use it to get all replacement words from server once

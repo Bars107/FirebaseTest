@@ -8,23 +8,23 @@ import java.util.regex.Pattern;
 
 public class WordFilterHelper {
 
-    public static String addSpaces(String word) {
+    public static String addSpacesSenitise(String word) {
         return addCharacterToEach(word, "$0 ");
     }
 
-    public static String addDots(String word) {
+    public static String addDotsSenitise(String word) {
         return addCharacterToEach(word, "$0.");
     }
 
-    public static String addUnderline(String word) {
+    public static String addUnderlineSenitise(String word) {
         return addCharacterToEach(word, "$0_");
     }
 
-    public static String replaceSymbolH(String word) {
+    public static String replaceSymbolHSenitise(String word) {
         return replaceSymbol(word, "H", "|-|");
     }
 
-    public static String replaceSymbolE(String word) {
+    public static String replaceSymbolESenitise(String word) {
         return replaceSymbol(word, "e", "3");
     }
 

@@ -2,16 +2,25 @@ package innovecs.tes.android;
 
 import android.util.Log;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import innovecs.tes.android.DataStructures.DatabaseValue;
+import innovecs.tes.android.DataStructures.ReplacementUnit;
+import innovecs.tes.android.helpers.WordFilterHelper;
 
 /**
  * Created by barsi on 3/20/2017.
  */
 
 public class SanitiseManager {
+    private static final String SENITISE_METHOD_TAG = "Senitise";
+
     private List<ReplacementUnit> replacementUnits = new ArrayList<>();
+
     /**
      * Values in this list will look like this
      * index - value
@@ -24,7 +33,10 @@ public class SanitiseManager {
      */
     private List<String> replacementSnowballs = new ArrayList<>();
 
+    private List<Method> replacementMethods = new ArrayList<>();
+
     public SanitiseManager() {
+        collectMethods();
         replacementSnowballs.add("");
     }
 
@@ -67,7 +79,7 @@ public class SanitiseManager {
     /**
      * If initial list size is less than number, it means that it doesn't have string of needed length
      * string of needed length will be added at the end of the list
-     * @param size
+     * @param size of the string which should be replaced by * symbols
      */
     private void updateReplacementSnowballs(int size) {
         int initialSize = size - replacementSnowballs.size() + 1;
@@ -80,8 +92,31 @@ public class SanitiseManager {
         }
     }
 
-    private void addFilters(String word, int lenght) {
+    /**
+     *  uses reflection to iterate over methods of WordFilterHelper to get all needed modification rules
+     */
+    private void collectMethods(){
+        Class wordFilterHelper = WordFilterHelper.class;
+        for (Method method : wordFilterHelper.getMethods()){
+            if (Modifier.isPublic(method.getModifiers()) && method.getName().contains(SENITISE_METHOD_TAG)) {
+                replacementMethods.add(method);
+            }
+        }
+    }
 
+    private void addFilters(String word, int lenght) {
+        for (Method method : replacementMethods){
+            try {
+                Object result = method.invoke(this, word);
+                String filter = (String) result;
+                if (!word.equals(filter)){
+                    ReplacementUnit replacementUnit = new ReplacementUnit(filter, lenght);
+                    replacementUnits.add(replacementUnit);
+                }
+            } catch (Exception e) {
+                Log.e("SENITISE_MANAGER", e.getMessage());
+            }
+        }
     }
 
 }
